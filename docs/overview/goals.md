@@ -1,8 +1,25 @@
 # Goals
 
-- Deterministic async scheduling using tokio primitives.
-- Tiling layout engine supporting nested splits and dynamic reflow.
-- Multi-tab model with persistent session state and multiplexing.
-- Assembly and markup designed for static typing and zero attributes.
-- Renderer pipeline that parses markup and executes assembly in a unified VM.
-- Minimal external dependencies; implement core subsystems from scratch.
+## Product Goals
+
+- Provide a super-app shell that can host multiple tabs with independent state and layout.
+- Preserve deterministic behavior under load; same inputs yield same outputs.
+- Guarantee recoverable state through persistent session snapshots.
+
+## Engineering Goals
+
+- Use a unified VM to execute assembly handlers and drive render updates.
+- Ensure layout and rendering are pure functions over immutable trees and diffs.
+- Keep subsystems loosely coupled via explicit message contracts.
+
+## Language Goals
+
+- Maintain a strict, attribute-free syntax model for markup and assembly.
+- Enforce static typing across assembly modules and module boundaries.
+- Enable interop via shared module IDs and explicit bindings.
+
+## Operational Goals
+
+- Support reproducible builds across local and containerized environments.
+- Keep config deterministic and reload-driven rather than hot-patched.
+- Provide strict failure visibility through explicit effect tracing.
