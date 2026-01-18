@@ -1,7 +1,7 @@
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::fs::{self, OpenOptions};
-use tokio::io::AsyncWriteExt;
+use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt};
 use tokio::time::{interval, Duration};
 
 mod core;
@@ -57,6 +57,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         let _ = tokio::signal::ctrl_c().await;
         let _ = shutdown_tx.send(Event::Shutdown).await;
+    });
+
+    let input_tx = bus.sender();
+    tokio::spawn(async move {
+        let stdin = io::stdin();
+        let mut reader = io::BufReader::new(stdin).lines();
+        while let Ok(Some(line)) = reader.next_line().await {
+            if input_tx.send(Event::Input(line)).await.is_err() {
+                break;
+            }
+        }
     });
 
     while let Some(event) = bus.recv().await {
