@@ -1,0 +1,9 @@
+services:
+  vylrhg:
+    build: .
+    container_name: vylrhg-app
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
