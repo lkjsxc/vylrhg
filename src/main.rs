@@ -14,6 +14,7 @@ mod tabs;
 
 use crate::core::commands::{parse_line, Command};
 use crate::core::event_bus::{Event, EventBus};
+use crate::layout::bindings::TileBindings;
 use crate::layout::{LayoutTree, SplitDir};
 use crate::renderer::pipeline::{RenderOp, Renderer};
 use crate::session::snapshot::SessionSnapshot;
@@ -49,6 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut tabs = TabManager::new();
     let mut renderer = Renderer::new();
     let mut layout = LayoutTree::new();
+    let mut bindings = TileBindings::new(tabs.active_id().unwrap_or(1));
 
     tokio::spawn(async move {
         loop {
@@ -92,6 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let _ = write_status(&data_dir, &message).await;
         }
         let mut layout_changed = false;
+        let mut bindings_changed = false;
         if let Event::Input(command) = &event {
             if let Some(dir) = command.strip_prefix("layout:split ") {
                 let split = match dir.trim() {
@@ -110,17 +113,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let _ = write_status(&data_dir, &format!("layout focus ok={}", ok)).await;
                     layout_changed = ok;
                 }
+            } else if let Some(rest) = command.strip_prefix("tile:bind ") {
+                let mut parts = rest.split_whitespace();
+                let tile = parts.next().and_then(|v| v.parse::<u64>().ok());
+                let tab = parts.next().and_then(|v| v.parse::<u64>().ok());
+                if let (Some(tile), Some(tab)) = (tile, tab) {
+                    if tabs.has_tab(tab) && layout.leaf_ids().contains(&tile) {
+                        let ok = bindings.bind(tile, tab);
+                        let _ = write_status(&data_dir, &format!("tile bind ok={}", ok)).await;
+                        bindings_changed = ok;
+                    } else {
+                        let _ = write_status(&data_dir, "tile bind invalid").await;
+                    }
+                }
+            } else if let Some(id) = command.strip_prefix("tile:unbind ") {
+                if let Ok(tile) = id.trim().parse::<u64>() {
+                    let ok = bindings.unbind(tile);
+                    let _ = write_status(&data_dir, &format!("tile unbind ok={}", ok)).await;
+                    bindings_changed = ok;
+                }
+            } else if command == "tile:map" {
+                let _ = write_status(&data_dir, &format!("tile map {}", bindings.describe())).await;
             }
         }
+        let tiles = layout.leaf_ids();
+        bindings.ensure_tiles(&tiles, tabs.active_id().unwrap_or(1));
         let mut ops = renderer.handle_event(&event);
         if layout_changed {
             ops.push(RenderOp::Text(format!("render layout {}", layout.describe())));
+        }
+        if bindings_changed {
+            ops.push(RenderOp::Text(format!("render bindings {}", bindings.describe())));
         }
         for op in &ops {
             let _ = write_status(&data_dir, &format!("{:?}", op)).await;
         }
 
-        let snapshot = SessionSnapshot::from_state(&tabs, renderer.frame(), &layout, &ops);
+        let snapshot = SessionSnapshot::from_state(&tabs, renderer.frame(), &layout, &bindings, &ops);
         let _ = write_snapshot(&data_dir, &snapshot.to_json()).await;
         if matches!(event, Event::Shutdown) {
             break;

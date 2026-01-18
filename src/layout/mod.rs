@@ -4,6 +4,8 @@ pub enum SplitDir {
     Vertical,
 }
 
+pub mod bindings;
+
 #[derive(Debug, Clone)]
 pub enum Node {
     Leaf { id: u64 },

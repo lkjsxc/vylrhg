@@ -1,3 +1,4 @@
+use crate::layout::bindings::TileBindings;
 use crate::layout::LayoutTree;
 use crate::renderer::pipeline::RenderOp;
 use crate::tabs::TabManager;
@@ -9,6 +10,8 @@ pub struct SessionSnapshot {
     pub layout: String,
     pub active_tile: u64,
     pub tiles: Vec<u64>,
+    pub bindings: String,
+    pub binding_pairs: Vec<(u64, u64)>,
     pub last_render_ops: Vec<String>,
 }
 
@@ -17,6 +20,7 @@ impl SessionSnapshot {
         tabs: &TabManager,
         frame: u64,
         layout: &LayoutTree,
+        bindings: &TileBindings,
         ops: &[RenderOp],
     ) -> Self {
         Self {
@@ -25,6 +29,8 @@ impl SessionSnapshot {
             layout: layout.describe(),
             active_tile: layout.active_id(),
             tiles: layout.leaf_ids(),
+            bindings: bindings.describe(),
+            binding_pairs: bindings.pairs(),
             last_render_ops: ops.iter().map(|op| format!("{:?}", op)).collect(),
         }
     }
@@ -44,13 +50,22 @@ impl SessionSnapshot {
             .collect::<Vec<String>>()
             .join(",");
 
+        let bindings = self
+            .binding_pairs
+            .iter()
+            .map(|(tile, tab)| format!("[{},{}]", tile, tab))
+            .collect::<Vec<String>>()
+            .join(",");
+
         format!(
-            "{\"frame\":{},\"active_tab\":\"{}\",\"layout\":\"{}\",\"active_tile\":{},\"tiles\":[{}],\"render_ops\":[{}]}",
+            "{\"frame\":{},\"active_tab\":\"{}\",\"layout\":\"{}\",\"active_tile\":{},\"tiles\":[{}],\"bindings\":\"{}\",\"binding_pairs\":[{}],\"render_ops\":[{}]}",
             self.frame,
             escape_json(&self.active_tab_title),
             escape_json(&self.layout),
             self.active_tile,
             tiles,
+            escape_json(&self.bindings),
+            bindings,
             ops
         )
     }

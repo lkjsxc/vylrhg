@@ -16,5 +16,5 @@ pub fn parse_line(line: &str) -> Option<Command> {
 }
 
 pub fn help_text() -> &'static str {
-    "commands:\n  help | ?\n  markup:<markup>\n  asm:<program>\n  tab:new <title>\n  tab:list\n  tab:focus <id>\n  layout:split h|v\n  layout:focus <id>"
+    "commands:\n  help | ?\n  markup:<markup>\n  asm:<program>\n  tab:new <title>\n  tab:list\n  tab:focus <id>\n  layout:split h|v\n  layout:focus <id>\n  tile:bind <tile> <tab>\n  tile:unbind <tile>\n  tile:map"
 }

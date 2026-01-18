@@ -81,4 +81,8 @@ impl TabManager {
     pub fn active_id(&self) -> Option<u64> {
         self.active
     }
+
+    pub fn has_tab(&self, id: u64) -> bool {
+        self.tabs.iter().any(|tab| tab.id == id)
+    }
 }
