@@ -1,4 +1,5 @@
 use crate::core::event_bus::Event;
+use crate::markup::parser::parse_markup;
 
 #[derive(Debug, Clone)]
 pub enum RenderOp {
@@ -27,7 +28,17 @@ impl Renderer {
                     RenderOp::FrameEnd,
                 ]
             }
-            Event::Input(text) => vec![RenderOp::Text(format!("render input={}", text))],
+            Event::Input(text) => {
+                if let Some(markup) = text.strip_prefix("markup:") {
+                    let doc = parse_markup(markup);
+                    vec![RenderOp::Text(format!(
+                        "render markup roots={}",
+                        doc.roots.len()
+                    ))]
+                } else {
+                    vec![RenderOp::Text(format!("render input={}", text))]
+                }
+            }
             Event::Shutdown => vec![RenderOp::Text("render shutdown".to_string())],
         }
     }
