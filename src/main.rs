@@ -5,6 +5,7 @@ use tokio::io::AsyncWriteExt;
 use tokio::time::{interval, Duration};
 
 mod core;
+mod assembly;
 mod markup;
 mod renderer;
 mod tabs;

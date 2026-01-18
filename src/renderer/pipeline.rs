@@ -1,4 +1,6 @@
 use crate::core::event_bus::Event;
+use crate::assembly::parser::parse_program;
+use crate::assembly::vm::Vm;
 use crate::markup::parser::parse_markup;
 
 #[derive(Debug, Clone)]
@@ -11,11 +13,15 @@ pub enum RenderOp {
 #[derive(Debug, Default)]
 pub struct Renderer {
     frame: u64,
+    vm: Vm,
 }
 
 impl Renderer {
     pub fn new() -> Self {
-        Self { frame: 0 }
+        Self {
+            frame: 0,
+            vm: Vm::new(),
+        }
     }
 
     pub fn handle_event(&mut self, event: &Event) -> Vec<RenderOp> {
@@ -34,6 +40,14 @@ impl Renderer {
                     vec![RenderOp::Text(format!(
                         "render markup roots={}",
                         doc.roots.len()
+                    ))]
+                } else if let Some(program) = text.strip_prefix("asm:") {
+                    self.vm.reset();
+                    let program = parse_program(program);
+                    let result = self.vm.run(&program);
+                    vec![RenderOp::Text(format!(
+                        "exec asm halted={} stack={:?}",
+                        result.halted, result.stack
                     ))]
                 } else {
                     vec![RenderOp::Text(format!("render input={}", text))]
