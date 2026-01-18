@@ -5,9 +5,11 @@ use tokio::io::AsyncWriteExt;
 use tokio::time::{interval, Duration};
 
 mod core;
+mod renderer;
 mod tabs;
 
 use crate::core::event_bus::{Event, EventBus};
+use crate::renderer::pipeline::Renderer;
 use crate::tabs::TabManager;
 
 fn now_epoch_secs() -> u64 {
@@ -38,6 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tx = bus.sender();
     let mut ticker = interval(Duration::from_secs(5));
     let mut tabs = TabManager::new();
+    let mut renderer = Renderer::new();
 
     tokio::spawn(async move {
         loop {
@@ -57,6 +60,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(event) = bus.recv().await {
         if let Some(message) = tabs.handle_event(&event) {
             let _ = write_status(&data_dir, &message).await;
+        }
+        for op in renderer.handle_event(&event) {
+            let _ = write_status(&data_dir, &format!("{:?}", op)).await;
         }
         if matches!(event, Event::Shutdown) {
             break;
