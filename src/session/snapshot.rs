@@ -12,6 +12,7 @@ pub struct SessionSnapshot {
     pub tiles: Vec<u64>,
     pub bindings: String,
     pub binding_pairs: Vec<(u64, u64)>,
+    pub tile_contexts: Vec<(u64, String)>,
     pub last_render_ops: Vec<String>,
 }
 
@@ -23,6 +24,14 @@ impl SessionSnapshot {
         bindings: &TileBindings,
         ops: &[RenderOp],
     ) -> Self {
+        let tile_contexts = bindings
+            .pairs()
+            .into_iter()
+            .map(|(tile, tab)| {
+                let title = tabs.title_for(tab).unwrap_or_else(|| "unknown".to_string());
+                (tile, title)
+            })
+            .collect::<Vec<(u64, String)>>();
         Self {
             frame,
             active_tab_title: tabs.active_title(),
@@ -31,6 +40,7 @@ impl SessionSnapshot {
             tiles: layout.leaf_ids(),
             bindings: bindings.describe(),
             binding_pairs: bindings.pairs(),
+            tile_contexts,
             last_render_ops: ops.iter().map(|op| format!("{:?}", op)).collect(),
         }
     }
@@ -57,8 +67,15 @@ impl SessionSnapshot {
             .collect::<Vec<String>>()
             .join(",");
 
+        let contexts = self
+            .tile_contexts
+            .iter()
+            .map(|(tile, title)| format!("[{},\"{}\"]", tile, escape_json(title)))
+            .collect::<Vec<String>>()
+            .join(",");
+
         format!(
-            "{{\"frame\":{},\"active_tab\":\"{}\",\"layout\":\"{}\",\"active_tile\":{},\"tiles\":[{}],\"bindings\":\"{}\",\"binding_pairs\":[{}],\"render_ops\":[{}]}}",
+            "{{\"frame\":{},\"active_tab\":\"{}\",\"layout\":\"{}\",\"active_tile\":{},\"tiles\":[{}],\"bindings\":\"{}\",\"binding_pairs\":[{}],\"tile_contexts\":[{}],\"render_ops\":[{}]}}",
             self.frame,
             escape_json(&self.active_tab_title),
             escape_json(&self.layout),
@@ -66,6 +83,7 @@ impl SessionSnapshot {
             tiles,
             escape_json(&self.bindings),
             bindings,
+            contexts,
             ops
         )
     }

@@ -143,7 +143,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ops.push(RenderOp::Text(format!("render layout {}", layout.describe())));
         }
         if bindings_changed {
+            let contexts = bindings
+                .pairs()
+                .into_iter()
+                .map(|(tile, tab)| {
+                    let title = tabs.title_for(tab).unwrap_or_else(|| "unknown".to_string());
+                    format!("{}:{}", tile, title)
+                })
+                .collect::<Vec<String>>()
+                .join(",");
             ops.push(RenderOp::Text(format!("render bindings {}", bindings.describe())));
+            ops.push(RenderOp::Text(format!("render contexts {}", contexts)));
         }
         for op in &ops {
             let _ = write_status(&data_dir, &format!("{:?}", op)).await;

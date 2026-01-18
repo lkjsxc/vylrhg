@@ -85,4 +85,11 @@ impl TabManager {
     pub fn has_tab(&self, id: u64) -> bool {
         self.tabs.iter().any(|tab| tab.id == id)
     }
+
+    pub fn title_for(&self, id: u64) -> Option<String> {
+        self.tabs
+            .iter()
+            .find(|tab| tab.id == id)
+            .map(|tab| tab.title.clone())
+    }
 }
