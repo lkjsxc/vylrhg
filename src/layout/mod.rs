@@ -79,6 +79,16 @@ impl LayoutTree {
         format!("active={} tree={}", self.active, self.describe_node(&self.root))
     }
 
+    pub fn active_id(&self) -> u64 {
+        self.active
+    }
+
+    pub fn leaf_ids(&self) -> Vec<u64> {
+        let mut ids = Vec::new();
+        self.collect_leaf_ids(&self.root, &mut ids);
+        ids
+    }
+
     fn describe_node(&self, node: &Node) -> String {
         match node {
             Node::Leaf { id } => format!("L{}", id),
@@ -96,6 +106,16 @@ impl LayoutTree {
         match node {
             Node::Leaf { id: leaf_id } => *leaf_id == id,
             Node::Split { a, b, .. } => self.contains(a, id) || self.contains(b, id),
+        }
+    }
+
+    fn collect_leaf_ids(&self, node: &Node, ids: &mut Vec<u64>) {
+        match node {
+            Node::Leaf { id } => ids.push(*id),
+            Node::Split { a, b, .. } => {
+                self.collect_leaf_ids(a, ids);
+                self.collect_leaf_ids(b, ids);
+            }
         }
     }
 }

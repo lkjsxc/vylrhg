@@ -15,7 +15,7 @@ mod tabs;
 use crate::core::commands::{parse_line, Command};
 use crate::core::event_bus::{Event, EventBus};
 use crate::layout::{LayoutTree, SplitDir};
-use crate::renderer::pipeline::Renderer;
+use crate::renderer::pipeline::{RenderOp, Renderer};
 use crate::session::snapshot::SessionSnapshot;
 use crate::tabs::TabManager;
 
@@ -91,6 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(message) = tabs.handle_event(&event) {
             let _ = write_status(&data_dir, &message).await;
         }
+        let mut layout_changed = false;
         if let Event::Input(command) = &event {
             if let Some(dir) = command.strip_prefix("layout:split ") {
                 let split = match dir.trim() {
@@ -101,15 +102,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(split) = split {
                     let id = layout.split_active(split);
                     let _ = write_status(&data_dir, &format!("layout split id={}", id)).await;
+                    layout_changed = true;
                 }
             } else if let Some(id) = command.strip_prefix("layout:focus ") {
                 if let Ok(parsed) = id.trim().parse::<u64>() {
                     let ok = layout.focus(parsed);
                     let _ = write_status(&data_dir, &format!("layout focus ok={}", ok)).await;
+                    layout_changed = ok;
                 }
             }
         }
-        let ops = renderer.handle_event(&event);
+        let mut ops = renderer.handle_event(&event);
+        if layout_changed {
+            ops.push(RenderOp::Text(format!("render layout {}", layout.describe())));
+        }
         for op in &ops {
             let _ = write_status(&data_dir, &format!("{:?}", op)).await;
         }
