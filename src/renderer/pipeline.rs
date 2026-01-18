@@ -1,5 +1,6 @@
 use crate::core::event_bus::Event;
 use crate::assembly::parser::parse_program;
+use crate::core::commands::help_text;
 use crate::assembly::vm::Vm;
 use crate::markup::parser::parse_markup;
 
@@ -35,7 +36,9 @@ impl Renderer {
                 ]
             }
             Event::Input(text) => {
-                if let Some(markup) = text.strip_prefix("markup:") {
+                if text == "sys:help" {
+                    vec![RenderOp::Text(help_text().to_string())]
+                } else if let Some(markup) = text.strip_prefix("markup:") {
                     let doc = parse_markup(markup);
                     vec![RenderOp::Text(format!(
                         "render markup roots={}",

@@ -10,6 +10,7 @@ mod markup;
 mod renderer;
 mod tabs;
 
+use crate::core::commands::{help_text, parse_line, Command};
 use crate::core::event_bus::{Event, EventBus};
 use crate::renderer::pipeline::Renderer;
 use crate::tabs::TabManager;
@@ -64,8 +65,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let stdin = io::stdin();
         let mut reader = io::BufReader::new(stdin).lines();
         while let Ok(Some(line)) = reader.next_line().await {
-            if input_tx.send(Event::Input(line)).await.is_err() {
-                break;
+            if let Some(command) = parse_line(&line) {
+                match command {
+                    Command::Help => {
+                        let _ = input_tx
+                            .send(Event::Input("sys:help".to_string()))
+                            .await;
+                    }
+                    Command::Input(command_line) => {
+                        if input_tx.send(Event::Input(command_line)).await.is_err() {
+                            break;
+                        }
+                    }
+                }
             }
         }
     });
