@@ -8,11 +8,13 @@ mod core;
 mod assembly;
 mod markup;
 mod renderer;
+mod session;
 mod tabs;
 
 use crate::core::commands::{help_text, parse_line, Command};
 use crate::core::event_bus::{Event, EventBus};
 use crate::renderer::pipeline::Renderer;
+use crate::session::snapshot::SessionSnapshot;
 use crate::tabs::TabManager;
 
 fn now_epoch_secs() -> u64 {
@@ -86,13 +88,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Some(message) = tabs.handle_event(&event) {
             let _ = write_status(&data_dir, &message).await;
         }
-        for op in renderer.handle_event(&event) {
+        let ops = renderer.handle_event(&event);
+        for op in &ops {
             let _ = write_status(&data_dir, &format!("{:?}", op)).await;
         }
+
+        let snapshot = SessionSnapshot::from_state(&tabs, renderer.frame(), &ops);
+        let _ = write_snapshot(&data_dir, &snapshot.to_json()).await;
         if matches!(event, Event::Shutdown) {
             break;
         }
     }
 
     Ok(())
+}
+
+async fn write_snapshot(data_dir: &str, payload: &str) -> std::io::Result<()> {
+    fs::create_dir_all(data_dir).await?;
+    let path = format!("{}/session.json", data_dir.trim_end_matches('/'));
+    fs::write(path, payload).await
 }

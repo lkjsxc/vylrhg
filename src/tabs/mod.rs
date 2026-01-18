@@ -54,4 +54,11 @@ impl TabManager {
             Event::Shutdown => Some("shutdown".to_string()),
         }
     }
+
+    pub fn active_title(&self) -> String {
+        self.active
+            .and_then(|id| self.tabs.iter().find(|tab| tab.id == id))
+            .map(|tab| tab.title.clone())
+            .unwrap_or_else(|| "none".to_string())
+    }
 }

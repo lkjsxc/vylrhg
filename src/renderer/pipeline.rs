@@ -59,4 +59,8 @@ impl Renderer {
             Event::Shutdown => vec![RenderOp::Text("render shutdown".to_string())],
         }
     }
+
+    pub fn frame(&self) -> u64 {
+        self.frame
+    }
 }
