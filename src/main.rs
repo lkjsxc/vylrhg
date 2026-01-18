@@ -1,7 +1,7 @@
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::fs::{self, OpenOptions};
-use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt};
+use tokio::io::{stdin, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::time::{interval, Duration};
 
 mod core;
@@ -11,7 +11,7 @@ mod renderer;
 mod session;
 mod tabs;
 
-use crate::core::commands::{help_text, parse_line, Command};
+use crate::core::commands::{parse_line, Command};
 use crate::core::event_bus::{Event, EventBus};
 use crate::renderer::pipeline::Renderer;
 use crate::session::snapshot::SessionSnapshot;
@@ -64,8 +64,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let input_tx = bus.sender();
     tokio::spawn(async move {
-        let stdin = io::stdin();
-        let mut reader = io::BufReader::new(stdin).lines();
+        let stdin = stdin();
+        let mut reader = BufReader::new(stdin).lines();
         while let Ok(Some(line)) = reader.next_line().await {
             if let Some(command) = parse_line(&line) {
                 match command {
