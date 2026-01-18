@@ -61,7 +61,7 @@ impl LayoutTree {
             }
             Node::Leaf { .. } => node,
             Node::Split { dir, a, b } => Node::Split {
-                dir,
+                dir: dir.clone(),
                 a: Box::new(Self::split_node(*a, target, new_id, dir.clone(), replaced)),
                 b: Box::new(Self::split_node(*b, target, new_id, dir.clone(), replaced)),
             },
