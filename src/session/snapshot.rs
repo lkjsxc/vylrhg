@@ -58,7 +58,7 @@ impl SessionSnapshot {
             .join(",");
 
         format!(
-            "{\"frame\":{},\"active_tab\":\"{}\",\"layout\":\"{}\",\"active_tile\":{},\"tiles\":[{}],\"bindings\":\"{}\",\"binding_pairs\":[{}],\"render_ops\":[{}]}",
+            "{{\"frame\":{},\"active_tab\":\"{}\",\"layout\":\"{}\",\"active_tile\":{},\"tiles\":[{}],\"bindings\":\"{}\",\"binding_pairs\":[{}],\"render_ops\":[{}]}}",
             self.frame,
             escape_json(&self.active_tab_title),
             escape_json(&self.layout),

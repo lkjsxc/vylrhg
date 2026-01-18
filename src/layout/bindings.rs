@@ -42,7 +42,7 @@ impl TileBindings {
     }
 
     pub fn pairs(&self) -> Vec<(u64, u64)> {
-        let mut pairs = self.map.iter().map(|(t, tab)| (*t, *tab)).collect();
+        let mut pairs: Vec<(u64, u64)> = self.map.iter().map(|(t, tab)| (*t, *tab)).collect();
         pairs.sort_by(|a, b| a.0.cmp(&b.0));
         pairs
     }
